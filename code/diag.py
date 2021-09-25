@@ -8,46 +8,50 @@ import sys, os, glob
 from data_load import load_data
 # =================================
 
-def draw_var(var_name, axis, section, tidx):
-    print('Drawing {VN} @ {IDX:06d}'.format(VN=var_name, IDX=tidx))
-    data = load_data(case_name, "Thermodynamic", idx=tidx)
+def draw_var(var_name, log, tidx):
+    data = load_data(case_name, "Diag", idx=tidx)
     variable = np.array(data[var_name])[0, :len(zc), iycmin:iycmax+1, ixcmin:ixcmax+1]
-    vmin, vmax = 0, 0.005
-    lvs = np.linspace(vmin, vmax, 20)
+    lvs = np.linspace(log['vmin'], log['vmax'], log['Ncolor'])
     # select which section
-    if 'x' not in axis:
-        variable = variable[:, :, section]
+    if 'x' not in log['axis']:
+        variable = variable[:, :, log['section']]
         cf = contourf(yc, zc, variable, levels=lvs)
-    elif 'y' not in axis:
-        variable = variable[:, section, :]
+    elif 'y' not in log['axis']:
+        variable = variable[:, log['section'], :]
         cf = contourf(xc, zc, variable, levels=lvs)
-    elif 'z' not in axis:
-        variable = variable[section, :, :]
+    elif 'z' not in log['axis']:
+        variable = variable[log['section'], :, :]
         cf = contourf(xc, yc, variable, levels=lvs)
     colorbar(cf)
 
     title('Time: {:06d}'.format(tidx))
-    
-    fig_dir = home_dir + 'figure_VVM/{CN}/thermodynamic/{VN}/'.\
+
+    # check dir
+    fig_dir = home_dir + 'figure_VVM/{CN}/diag/{VN}/'.\
               format(CN=case_name,
                      VN=var_name)
+
     if not os.path.isdir(fig_dir):
         print('No {VN} Folder, Creating...'.format(VN=var_name))
         os.mkdir(fig_dir)
 
+
+    # saving figure
     savefig(fig_dir + '{VN}-{IDX:06d}.jpg'\
             .format(CN = case_name, 
                     VN = var_name, 
 		            IDX= tidx), dpi=100)
     clf()
+    print('Drawing {VN} @ {IDX:06d}'.format(VN=var_name, IDX=tidx))
 
 if __name__ == "__main__":
     case_name = str(input())
     home_dir = "/home/atmenu10246/"
 
-    thermody = load_data(case_name, "Thermodynamic", idx=0)
+    diag = load_data(case_name, "Diag", idx=0)
     # gloabl variable #
-    xc, yc, zc = np.array(thermody['xc']), np.array(thermody['yc']), np.array(thermody['zc'])
+    xc, yc = np.array(diag['xc']), np.array(diag['yc']), 
+    zc = np.array(diag['zc'])
     xc = xc - np.max(xc) / 2 # center @ 0
     xcmin, xcmax = -5000, 5000
     ycmin, ycmax = np.min(yc), np.max(yc)
@@ -57,5 +61,11 @@ if __name__ == "__main__":
     zc = zc[zc <= zclim]
     xc = xc[(xc >= xcmin) & (xc <= xcmax)]
 
-    for i in range(30):
-        draw_var(var_name='qv', axis='xz', section=63, tidx=i)
+    draw_log = {
+    'vmin' : 0, 
+    'vmax' : 0.005, 
+    'Ncolor' : 20,
+    'section' : 63, 
+    'axis' : 'xz'
+    }
+    draw_var(var_name='dm01', log=draw_log, tidx=0)
