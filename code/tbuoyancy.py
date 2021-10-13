@@ -255,13 +255,13 @@ if __name__ == "__main__":
         # =====testing region=====
 
         # ========== drawing options ========== #
-        #draw_cloud(profile=42000)
-        #draw_buoyancy(profile=42000, type="tv")
-        #draw_buoyancy(profile=42000, type="None")
-        #draw_srf_rain()
-        #draw_cwv()
+        draw_cloud(profile=42000)
+        draw_buoyancy(profile=42000, type="tv")
+        draw_buoyancy(profile=42000, type="None")
+        draw_srf_rain()
+        draw_cwv()
         draw_xycoreshell()
-        #draw_yzcoreshell(profile=42000)
+        draw_yzcoreshell(profile=42000)
         output_string = "task {START} -> {NOW} -> {END} ({P} %)"\
                         .format(START=tidx, NOW=i, END=tidx+length-1, P=((i - tidx + 1)/(length)*100))
         print(output_string)

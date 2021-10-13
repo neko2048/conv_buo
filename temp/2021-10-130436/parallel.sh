@@ -3,9 +3,9 @@
 # ============ control param ======================
 case_name="diurnal_prescribed"
 rmfig=false
-cover_old=true
+cover_old=false
 Tstart=320
-steps=40
+steps=4
 Ntask=4
 # ============= setting to remove all figures  ====================
 if $rmfig; then 
@@ -59,13 +59,13 @@ dir3="/home/atmenu10246/figure_VVM/temp/$now"
 while read dirname others; do
     dir1="/home/atmenu10246/figure_VVM/code/${dirname}"
     if $cover_old; then
-        [ -d $dir2 ] && rm -fr $dir2/$dirname && echo "- delete $dirname @ $case_name"
+        [ -d $dir2 ] && rm -fr $dir2 && echo "- delete $dirname @ $case_name"
         mv $dir1 $dir2
         echo "+ move ./$dirname to $case_name folder"
     else
         echo "* create temporary folder to save: $now/$dirname"
         [ ! -d $dir3 ] && mkdir $dir3
-        echo "${case_name}" >> "readme.md"
+        echo "${dir2}" >> "readme.md"
         cp parallel.sh $dir3
         mv readme.md $dir3 
         mv $dir1 $dir3
