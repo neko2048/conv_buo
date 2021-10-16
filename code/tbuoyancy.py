@@ -117,15 +117,15 @@ def draw_srf_rain():
     clf()
 
 
-def draw_wcv():
+def draw_cwv():
     cqv = cut_edge(thmo["qv"], set_axisarg)
     gradz = np.tile((zb[1:] - zb[:-1])[:, np.newaxis, np.newaxis], reps=(1, len(yc), len(xc)))
     # gradient z start from surface to heights
     grid_density = np.tile(denc[:, np.newaxis, np.newaxis], reps=(1, len(yc), len(xc)))
     weight = gradz * grid_density # shape: (k-1, j-1, i-1)
 
-    wcv = np.sum(weight * cqv, axis=(0)) # column water vapor, shape: (k, j, i)
-    pcolormesh(xb, yb, wcv, vmin=50, vmax=70)
+    cwv = np.sum(weight * cqv, axis=(0)) # column water vapor, shape: (k, j, i)
+    pcolormesh(xb, yb, cwv, vmin=50, vmax=70)
     colorbar()
 
     # cloud existence
@@ -133,7 +133,7 @@ def draw_wcv():
     Eqc = np.array(Eqc, dtype=int)
     contour(xc, yc, Eqc, levels=[1], colors='black')
     title("Column Water Vapor [" +  r"$kg/m^2$" + "] | T: {T:06d}".format(T=i*2))
-    savefig('wcv_{T:06d}.jpg'.format(T=i), dpi=200)
+    savefig('cwv_{T:06d}.jpg'.format(T=i), dpi=200)
     clf()
 
 def draw_xycoreshell():
@@ -178,14 +178,14 @@ def draw_yzcoreshell(profile):
     mask_core = np.logical_and(tvbuoyancy > 0, wc > 0)
     mask_core = np.logical_and(mask_core, qc > 0)
     mask_core = np.ma.masked_array(mask_core, mask_core<=0)
-    pcolormesh(yc, zc, mask_core, cmap=cmap, vmin=0, vmax=1)
+    pcolormesh(yb, zb, mask_core, cmap=cmap, vmin=0, vmax=1)
 
     # shell: saturated part but not core
     colors = cm.Blues(np.hstack([np.linspace(0.5, 0.75)]))
     cmap = LinearSegmentedColormap.from_list('name', colors)
     mask_shell = np.array(qc > 0, dtype=int) - np.array(mask_core, dtype=int)
     mask_shell = np.ma.masked_array(mask_shell, mask_shell<=0)
-    pcolormesh(yc, zc, mask_shell, cmap=cmap, vmin=0, vmax=1)
+    pcolormesh(yb, zb, mask_shell, cmap=cmap, vmin=0, vmax=1)
 
     title("Core & Shell | X: {P} | T: {T:06d}".format(P=profile, T=i*2))
     savefig('coreshell_yz{T:06d}.jpg'.format(T=i), dpi=200)
@@ -249,12 +249,12 @@ if __name__ == "__main__":
         # =====testing region=====
         
         # ========== drawing options ========== #
-        #draw_cloud(profile=42000)
-        #draw_buoyancy(profile=42000, type="tv")
-        #draw_buoyancy(profile=42000, type="None")
-        #draw_srf_rain()
-        #draw_wcv()
-        #draw_xycoreshell()
+        draw_cloud(profile=42000)
+        draw_buoyancy(profile=42000, type="tv")
+        draw_buoyancy(profile=42000, type="None")
+        draw_srf_rain()
+        draw_cwv()
+        draw_xycoreshell()
         draw_yzcoreshell(profile=42000)
         output_string = "task {START} -> {NOW} -> {END} ({P} %)"\
                         .format(START=tidx, NOW=i, END=tidx+length-1, P=((i - tidx + 1)/(length)*100))

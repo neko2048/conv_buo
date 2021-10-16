@@ -178,14 +178,14 @@ def draw_yzcoreshell(profile):
     mask_core = np.logical_and(tvbuoyancy > 0, wc > 0)
     mask_core = np.logical_and(mask_core, qc > 0)
     mask_core = np.ma.masked_array(mask_core, mask_core<=0)
-    pcolormesh(yc, zc, mask_core, cmap=cmap, vmin=0, vmax=1)
+    pcolormesh(yb, zb, mask_core, cmap=cmap, vmin=0, vmax=1)
 
     # shell: saturated part but not core
     colors = cm.Blues(np.hstack([np.linspace(0.5, 0.75)]))
     cmap = LinearSegmentedColormap.from_list('name', colors)
     mask_shell = np.array(qc > 0, dtype=int) - np.array(mask_core, dtype=int)
     mask_shell = np.ma.masked_array(mask_shell, mask_shell<=0)
-    pcolormesh(yc, zc, mask_shell, cmap=cmap, vmin=0, vmax=1)
+    pcolormesh(yb, zb, mask_shell, cmap=cmap, vmin=0, vmax=1)
 
     title("Core & Shell | X: {P} | T: {T:06d}".format(P=profile, T=i*2))
     savefig('coreshell_yz{T:06d}.jpg'.format(T=i), dpi=200)
