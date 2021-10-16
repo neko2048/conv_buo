@@ -2,7 +2,7 @@
 
 read -r case_name cover_old
 echo "---------- moving subfolders to $case_name folders ----------"
-now=$(date +%F%H%M)
+now=$(date +%F%H%M%s)
 while read dirname others; do
     dir1="/home/atmenu10246/figure_VVM/code/${dirname}"
     if $cover_old; then
