@@ -6,8 +6,8 @@ current_dir=`pwd`
 rmfig=true
 cover_old=false
 Tstart=320
-steps=3
-Ntask=3
+steps=30
+Ntask=2
 
 # ============= setting to remove all figures  ====================
 echo $rmfig | sh $current_dir/bash_fns/remove.sh # remove.sh

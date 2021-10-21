@@ -7,42 +7,34 @@ import sys
 ##### import self-defined lib #####
 from nclcmaps import nclcmap
 sys.path.append('../code/')
-from data_load import load_data
+from process_data import *
 from initiate import *
 
-def cut_edge(data, edge_arg):
-    argxmin = edge_arg["argxmin"]
-    argxmax = edge_arg["argxmax"]
-    argymin = edge_arg["argymin"]
-    argymax = edge_arg["argymax"]
-    argzmin = edge_arg["argzmin"]
-    argzmax = edge_arg["argzmax"]
+def draw_pure(var_name, type, log, tidx):
+    try:
+        data = load_data(case_name, type, idx=tidx)
+    except FileNotFoundError:
+        return None
+    variable = cut_edge(data[var_name], set_axisarg)
+    # select which section
+    if 'x' not in log['axis']:
+        arg = np.argmin(np.min(xc - profile))
+        variable = variable[:, :, arg]
+        cf = contourf(yc, zc, variable)
+    elif 'y' not in log['axis']:
+        arg = np.argmin(np.min(yc - profile))
+        variable = variable[:, arg, :]
+        cf = contourf(xc, zc, variable)
+    elif 'z' not in log['axis']:
+        arg = np.argmin(np.min(zc - profile))
+        variable = variable[arg, :, :]
+        cf = contourf(xc, yc, variable)
+    colorbar(cf)
 
-    return np.array(data)[0, argzmin:argzmax+1, argymin:argymax+1, argxmin:argxmax+1]
-
-
-def gen_buoyancy(data, edge_arg):
-    # need theta, qv, qc
-
-    theta = cut_edge(data['th'], set_axisarg)
-    theta0 = np.mean(theta, axis=(1, 2))
-    theta0 = np.tile(theta0[:, np.newaxis, np.newaxis], 
-                     reps=(1, theta.shape[1], theta.shape[2]))
-    theta_turb = theta - theta0
-
-    qv = cut_edge(data['qv'], set_axisarg)
-    qc = cut_edge(data['qc'], set_axisarg)
-
-    return 9.81 * (theta_turb/theta0 + 0.61 * qv - qc)
-
-def gen_tv_buoyancy(data, edge_arg):
-    # theta, qv
-    tv = cut_edge(data['th'], set_axisarg)
-    tv0 = np.mean(tv, axis=(1, 2))
-    tv0 = np.tile(tv0[:, np.newaxis, np.newaxis], 
-                     reps=(1, tv.shape[1], tv.shape[2]))
-    buoyancy = (tv - tv0) / tv0
-    return buoyancy
+    title('Time: {:06d}'.format(tidx))
+    # saving figure
+    savefig("{VN}_{T:06d}.jpg".format(VN=var_name, T=i), dpi=200)
+    clf()
 
 
 def draw_cloud(profile):
@@ -194,6 +186,16 @@ def draw_yzcoreshell(profile):
 
 
 if __name__ == "__main__":
+    # >>> for the pure drawing data e.g. diag, thermodynamic variables >>>
+    draw_log = {
+    'vmin' : -0.4, 
+    'vmax' : 0.4, 
+    'Ncolor' : 20,
+    'profile' : 40000, 
+    'axis' : 'xz',
+    'cbar' : 'coolwarm',
+    }
+    # <<< for the pure drawing data e.g. diag, thermodynamic variables <<<
     for i in range(tidx, tidx+length):
         thmo = load_data(case_name, "Thermodynamic", idx=i)
         dyna = load_data(case_name, "Dynamic", idx=i)
@@ -202,13 +204,14 @@ if __name__ == "__main__":
         # =====testing region=====
         
         # ========== drawing options ========== #
-        draw_cloud(profile=42000)
-        draw_buoyancy(profile=42000, type="tv")
-        draw_buoyancy(profile=42000, type="None")
-        draw_srf_rain()
-        draw_cwv()
-        draw_xycoreshell()
-        draw_yzcoreshell(profile=42000)
+        #draw_cloud(profile=42000)
+        #draw_buoyancy(profile=42000, type="tv")
+        #draw_buoyancy(profile=42000, type="None")
+        #draw_srf_rain()
+        #draw_cwv()
+        #draw_xycoreshell()
+        #draw_yzcoreshell(profile=42000)
+        #draw_pure(var_name="qr", type="Thermodynamic", log=draw_log, tidx=i)
         output_string = "task {START} -> {NOW} -> {END} ({P} %)"\
                         .format(START=tidx, NOW=i, END=tidx+length-1, P=((i - tidx + 1)/(length)*100))
         print(output_string)

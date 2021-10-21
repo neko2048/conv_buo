@@ -1,0 +1,50 @@
+---------- File Cleared ----------
+* buoyancy exists
+* cloud exists
+* cwv exists
+* coreshell exists
+* srfrain exists
+---------- start main program ----------
+task 350 -> 350 -> 350 (100.0 %)
+task 320 -> 320 -> 334 (6.666666666666667 %)
+task 320 -> 321 -> 334 (13.333333333333334 %)
+task 320 -> 322 -> 334 (20.0 %)
+task 320 -> 323 -> 334 (26.666666666666668 %)
+task 320 -> 324 -> 334 (33.33333333333333 %)
+task 320 -> 325 -> 334 (40.0 %)
+task 320 -> 326 -> 334 (46.666666666666664 %)
+task 320 -> 327 -> 334 (53.333333333333336 %)
+task 320 -> 328 -> 334 (60.0 %)
+task 320 -> 329 -> 334 (66.66666666666666 %)
+task 320 -> 330 -> 334 (73.33333333333333 %)
+task 320 -> 331 -> 334 (80.0 %)
+task 320 -> 332 -> 334 (86.66666666666667 %)
+task 320 -> 333 -> 334 (93.33333333333333 %)
+task 320 -> 334 -> 334 (100.0 %)
+task 335 -> 335 -> 349 (6.666666666666667 %)
+task 335 -> 336 -> 349 (13.333333333333334 %)
+task 335 -> 337 -> 349 (20.0 %)
+task 335 -> 338 -> 349 (26.666666666666668 %)
+task 335 -> 339 -> 349 (33.33333333333333 %)
+task 335 -> 340 -> 349 (40.0 %)
+task 335 -> 341 -> 349 (46.666666666666664 %)
+task 335 -> 342 -> 349 (53.333333333333336 %)
+task 335 -> 343 -> 349 (60.0 %)
+task 335 -> 344 -> 349 (66.66666666666666 %)
+task 335 -> 345 -> 349 (73.33333333333333 %)
+task 335 -> 346 -> 349 (80.0 %)
+task 335 -> 347 -> 349 (86.66666666666667 %)
+task 335 -> 348 -> 349 (93.33333333333333 %)
+task 335 -> 349 -> 349 (100.0 %)
+---------- collecting and sorting figures ----------
+- No buoyancy figures generated
+- No cloud figures generated
+- No cwv figures generated
++ coreshell figures are sorted
+- No srfrain figures generated
+---------- moving subfolders to diurnal_prescribed folders ----------
+* create temporary folder to save: 2021-10-2123361634830577/buoyancy
+* create temporary folder to save: 2021-10-2123361634830577/cloud
+* create temporary folder to save: 2021-10-2123361634830577/cwv
+* create temporary folder to save: 2021-10-2123361634830577/coreshell
+* create temporary folder to save: 2021-10-2123361634830577/srfrain

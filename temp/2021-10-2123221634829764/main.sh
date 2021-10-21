@@ -6,7 +6,7 @@ current_dir=`pwd`
 rmfig=true
 cover_old=false
 Tstart=320
-steps=3
+steps=30
 Ntask=3
 
 # ============= setting to remove all figures  ====================

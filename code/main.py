@@ -7,41 +7,33 @@ import sys
 ##### import self-defined lib #####
 from nclcmaps import nclcmap
 sys.path.append('../code/')
-from data_load import load_data
+from initiate import *
 
-def cut_edge(data, edge_arg):
-    argxmin = edge_arg["argxmin"]
-    argxmax = edge_arg["argxmax"]
-    argymin = edge_arg["argymin"]
-    argymax = edge_arg["argymax"]
-    argzmin = edge_arg["argzmin"]
-    argzmax = edge_arg["argzmax"]
+def draw_pure(var_name, type, log, tidx):
+    try:
+        data = load_data(case_name, type, idx=tidx)
+    except FileNotFoundError:
+        return None
+    variable = cut_edge(data[var_name], set_axisarg)
+    # select which section
+    if 'x' not in log['axis']:
+        arg = np.argmin(np.min(xc - profile))
+        variable = variable[:, :, arg]
+        cf = contourf(yc, zc, variable)
+    elif 'y' not in log['axis']:
+        arg = np.argmin(np.min(yc - profile))
+        variable = variable[:, arg, :]
+        cf = contourf(xc, zc, variable)
+    elif 'z' not in log['axis']:
+        arg = np.argmin(np.min(zc - profile))
+        variable = variable[arg, :, :]
+        cf = contourf(xc, yc, variable)
+    colorbar(cf)
 
-    return np.array(data)[0, argzmin:argzmax+1, argymin:argymax+1, argxmin:argxmax+1]
-
-
-def gen_buoyancy(data, edge_arg):
-    # need theta, qv, qc
-
-    theta = cut_edge(data['th'], set_axisarg)
-    theta0 = np.mean(theta, axis=(1, 2))
-    theta0 = np.tile(theta0[:, np.newaxis, np.newaxis], 
-                     reps=(1, theta.shape[1], theta.shape[2]))
-    theta_turb = theta - theta0
-
-    qv = cut_edge(data['qv'], set_axisarg)
-    qc = cut_edge(data['qc'], set_axisarg)
-
-    return 9.81 * (theta_turb/theta0 + 0.61 * qv - qc)
-
-def gen_tv_buoyancy(data, edge_arg):
-    # theta, qv
-    tv = cut_edge(data['th'], set_axisarg)
-    tv0 = np.mean(tv, axis=(1, 2))
-    tv0 = np.tile(tv0[:, np.newaxis, np.newaxis], 
-                     reps=(1, tv.shape[1], tv.shape[2]))
-    buoyancy = (tv - tv0) / tv0
-    return buoyancy
+    title('Time: {:06d}'.format(tidx))
+    # saving figure
+    savefig("{VN}_{T:06d}.jpg".format(VN=var_name, T=i), dpi=200)
+    clf()
 
 
 def draw_cloud(profile):
@@ -165,6 +157,60 @@ def draw_xycoreshell():
     savefig('coreshell_xy{T:06d}.jpg'.format(T=i), dpi=200)
     clf()
 
+def draw_xycore():
+    tvbuoyancy = gen_tv_buoyancy(data=thmo, edge_arg=set_axisarg) # shape: (k, j, i)
+    w = cut_edge(dyna["w"], set_axisarg) # choose for xy now
+    wc = np.array([w[0]] + [xw for xw in (w[1:]+w[:-1])/2]) # z level same as the one with theta
+    qc = cut_edge(thmo["qc"], set_axisarg)
+
+    # core: a saturated volume that is positively buoyant and moving upward
+    colors = cm.Reds(np.hstack([np.linspace(0.5, 1)]))
+    cmap = LinearSegmentedColormap.from_list('name', colors)
+    topmask_core = np.logical_and(tvbuoyancy > 0, wc > 0)
+    topmask_core = np.logical_and(topmask_core, qc > 0)
+    xytopmask_corePercent = np.sum(topmask_core, axis=(0))
+    xytopmask_corePercent = np.ma.masked_array(xytopmask_corePercent, xytopmask_corePercent<=0)
+    pcolormesh(xb, yb, xytopmask_corePercent, vmin=1, vmax=20, cmap=cmap)
+    colorbar()
+
+    title("Core & Shell Top View | T: {T:06d}".format(T=i*2))
+    savefig('coreshell_xyCore{T:06d}.jpg'.format(T=i), dpi=400)
+    clf()
+
+def draw_xycoreqcqr():
+    tvbuoyancy = gen_tv_buoyancy(data=thmo, edge_arg=set_axisarg) # shape: (k, j, i)
+    w = cut_edge(dyna["w"], set_axisarg) # choose for xy now
+    wc = np.array([w[0]] + [xw for xw in (w[1:]+w[:-1])/2]) # z level same as the one with theta
+    qc = cut_edge(thmo["qc"], set_axisarg)
+
+    # core: a saturated volume that is positively buoyant and moving upward
+    colors = cm.Reds(np.hstack([np.linspace(0.5, 1)]))
+    cmap = LinearSegmentedColormap.from_list('name', colors)
+    topmask_core = np.logical_and(tvbuoyancy > 0, wc > 0)
+    topmask_core = np.logical_and(topmask_core, qc > 0)
+    xytopmask_core = np.sum(topmask_core, axis=(0))
+    xytopmask_core = np.ma.masked_array(xytopmask_core, xytopmask_core<=0)
+    pcolormesh(xb, yb, xytopmask_core, vmin=1, vmax=20, cmap=cmap)
+    colorbar()
+
+    qr = cut_edge(thmo['qr'], set_axisarg)[0, :, :]
+    qr = ma.masked_array(qr, qr<0)
+    cmap = nclcmap('BrownBlue12')
+    #colors = cm.Blues(np.linspace(0.5, 1, 90))
+    cmap = LinearSegmentedColormap.from_list('name', [(0, "#bc763c"), (0.1, "#ffffff"), (0.2, "#b5cbe6"), (1.0, "#007bbb")])
+    contour(xc, yc, qr, levels=np.arange(0, 0.002, 0.0005), cmap=cmap, alpha=0.5)
+
+    # cloud existence
+    Eqc = np.mean(cut_edge(thmo["qr"], set_axisarg), axis=0) > 1e-6
+    Eqc = np.array(Eqc, dtype=int)
+    contour(xc, yc, Eqc, levels=[1], colors='black')
+
+
+    title("Core Top View with Qc Qr| T: {T:06d}".format(T=i*2))
+    savefig('coreshell_qcqr{T:06d}.jpg'.format(T=i), dpi=200)
+    clf()
+
+
 def draw_yzcoreshell(profile):
     xarg = np.argmin(np.abs(xc - profile))
     tvbuoyancy = gen_tv_buoyancy(data=thmo, edge_arg=set_axisarg)[:, :, xarg] # shape: (k-1, j-1, i-1)
@@ -193,69 +239,34 @@ def draw_yzcoreshell(profile):
 
 
 if __name__ == "__main__":
-    response = str(input())
-    case_name = response.split()[0]
-    tidx = int(response.split()[1])
-    length = int(response.split()[2])
-
-
-    home_dir = "/home/atmenu10246/"
-#    tidx = 0
-    thmo = load_data(case_name, "Thermodynamic", idx=tidx)
-    dyna = load_data(case_name, "Dynamic", idx=tidx)
-    # gloabl variable #
-    # ========== theta grid ==========
-    xc, yc = np.array(thmo['xc']), np.array(thmo['yc']), # theta level (i, ), (j, )
-    zc = np.array(thmo['zc']) # theta level (k, )
-    denc = np.loadtxt("../constants/{CN}_density.txt".format(CN=case_name)) # theta level (k, )
-    zz = np.loadtxt("../constants/{CN}_z.txt".format(CN=case_name), skiprows=2)[:-1, 1] # W level (k, )
-
-    set_axis = {
-    "xmin": 35000, 
-    "xmax": 50000, 
-    "ymin": 30000, 
-    "ymax": 45000, 
-    "zmin": 0, 
-    "zmax": 13000, 
+    # >>> for the pure drawing data e.g. diag, thermodynamic variables >>>
+    draw_log = {
+    'vmin' : -0.4, 
+    'vmax' : 0.4, 
+    'Ncolor' : 20,
+    'profile' : 40000, 
+    'axis' : 'xz',
+    'cbar' : 'coolwarm',
     }
-
-    set_axisarg = {
-    "argxmin": np.argmin(np.abs(xc - set_axis['xmin'])), 
-    "argxmax": np.argmin(np.abs(xc - set_axis['xmax'])), 
-    "argymin": np.argmin(np.abs(yc - set_axis['ymin'])), 
-    "argymax": np.argmin(np.abs(yc - set_axis['ymax'])), 
-    "argzmin": np.argmin(np.abs(zc - set_axis['zmin'])), 
-    "argzmax": np.argmin(np.abs(zc - set_axis['zmax'])), 
-    }
-
-    # cutting needed grids
-    xc = xc[set_axisarg["argxmin"]:set_axisarg["argxmax"]+1]
-    yc = yc[set_axisarg["argymin"]:set_axisarg["argymax"]+1]
-    zc = zc[set_axisarg["argzmin"]:set_axisarg["argzmax"]+1]
-    zz = zz[set_axisarg["argzmin"]:set_axisarg["argzmax"]+1]
-    denc = denc[set_axisarg["argzmin"]:set_axisarg["argzmax"]+1]
-    dx, dy, dz = np.gradient(xc), np.gradient(yc), np.gradient(zc) # (i, ), (j, ), (k, )
-    # boundary of theta (i+1, j+1, k+1)
-    xb = (np.array([xc[0] - dx[0]] + [x for x in xc]) + np.array([x for x in xc] + [xc[-1] + dx[-1]])) / 2 
-    yb = (np.array([yc[0] - dy[0]] + [y for y in yc]) + np.array([y for y in yc] + [yc[-1] + dy[-1]])) / 2 
-    zb = np.array([zc[0], (zc[0] + zc[1]) / 2] + [z for z in zz[1:]])
-
+    # <<< for the pure drawing data e.g. diag, thermodynamic variables <<<
     for i in range(tidx, tidx+length):
         thmo = load_data(case_name, "Thermodynamic", idx=i)
         dyna = load_data(case_name, "Dynamic", idx=i)
-        
         # =====testing region=====
         
         # =====testing region=====
         
         # ========== drawing options ========== #
-        draw_cloud(profile=42000)
-        draw_buoyancy(profile=42000, type="tv")
-        draw_buoyancy(profile=42000, type="None")
-        draw_srf_rain()
-        draw_cwv()
-        draw_xycoreshell()
-        draw_yzcoreshell(profile=42000)
+        #draw_cloud(profile=42000)
+        #draw_buoyancy(profile=42000, type="tv")
+        #draw_buoyancy(profile=42000, type="None")
+        #draw_srf_rain()
+        #draw_cwv()
+        #draw_xycoreshell()
+        draw_xycore()
+        #draw_xycoreqcqr()
+        #draw_yzcoreshell(profile=42000)
+        #draw_pure(var_name="qr", type="Thermodynamic", log=draw_log, tidx=i)
         output_string = "task {START} -> {NOW} -> {END} ({P} %)"\
                         .format(START=tidx, NOW=i, END=tidx+length-1, P=((i - tidx + 1)/(length)*100))
         print(output_string)

@@ -23,9 +23,9 @@ time_count=($(seq $Tstart $interval $Tend))
 # ============ main ==================
 echo "---------- start main program ----------"
 for k in ${time_count[@]:0:Ntask}; do
-    echo "$case_name $k $interval" | python tbuoyancy.py &
+    echo "$case_name $k $interval" | python main.py &
 done
-echo "$case_name $Tend 1" | python tbuoyancy.py
+echo "$case_name $Tend 1" | python main.py
 wait
 
 # ============ collect figures ============
