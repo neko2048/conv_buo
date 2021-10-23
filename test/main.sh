@@ -23,13 +23,13 @@ time_count=($(seq $Tstart $interval $Tend))
 # ============ main ==================
 echo "---------- start main program ----------"
 for k in ${time_count[@]:0:Ntask}; do
-    echo "$case_name $k $interval" | python main.py &
+    echo "$case_name $k $interval" | python convectAnalysis.py &
 done
-echo "$case_name $Tend 1" | python main.py
+echo "$case_name $Tend 1" | python convectAnalysis.py
 wait
 
 # ============ collect figures ============
-sh $current_dir/bash_fns/collectfig.sh
+#sh $current_dir/bash_fns/collectfig.sh
 
 # ============ move figure-contained folders to case folder ===========
-echo $case_name $cover_old | sh $current_dir/bash_fns/mvfig.sh
+#echo $case_name $cover_old | sh $current_dir/bash_fns/mvfig.sh

@@ -5,10 +5,10 @@ homeDir = "/home/atmenu10246/"
 case_name = "diurnal_prescribed"
 category = "Thermodynamic"
 set_axis = {
-"xmin": 35000, 
-"xmax": 50000, 
-"ymin": 30000, 
-"ymax": 45000, 
+"xmin": 0, #35000, 
+"xmax": 100000, #50000, 
+"ymin": 0, #30000, 
+"ymax": 100000, #45000, 
 "zmin": 0, 
 "zmax": 13000, 
 }

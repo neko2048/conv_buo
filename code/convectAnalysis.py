@@ -31,10 +31,8 @@ class Convection()
 
 if __name__ == "__main__":
     for i in range(tidx, tidx+length):
-        convection = Convection()
-        global tvbuoyancy 
-        tvbuoyancy = gen_tv_buoyancy(data=thmo, edge_arg=set_axisarg) # shape: (k, j, i)
-    
+        convection = Convection(tidx)
+        
         # =====testing region=====
         
         # =====testing region=====
