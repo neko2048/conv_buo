@@ -66,10 +66,10 @@ denc = np.loadtxt("../constants/{CN}_density.txt".format(CN=case_name)) # theta 
 zz = np.loadtxt("../constants/{CN}_z.txt".format(CN=case_name), skiprows=2)[:-1, 1] # W level (k, )
 
 set_axis = {
-"xmin": 0, #35000, 
-"xmax": 1000000, #50000, 
-"ymin": 0, #30000, 
-"ymax": 1000000, #45000, 
+"xmin": 0, # 35000, 
+"xmax": 50000, 
+"ymin": 0, # 30000, 
+"ymax": 45000, 
 "zmin": 0, 
 "zmax": 13000, 
 }

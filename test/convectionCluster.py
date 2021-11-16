@@ -37,7 +37,7 @@ class Convection:
         corePlanView = np.sum(self.core3DMask, axis=0)
         return corePlanView
 
-    def getCoreMax(self, numGrid=20, threshold=5):
+    def getCoreMax(self, numGrid=5, threshold=5):
         numGrid += 1 # the boundary counts
         xbsubGrid = np.linspace(self.xb[0], self.xb[-1], numGrid)
         ybsubGrid = np.linspace(self.yb[0], self.yb[-1], numGrid)
@@ -61,12 +61,27 @@ class Convection:
         qc = cut_edge(self.thmo["qc"], set_axisarg)
         return qc
 
-
-
+def killHalfCloud(shuffledCloudClusterLabel):
+    boundCloudLabel = []
+    for i in range(0, set_axisarg["argxmax"]-set_axisarg["argxmin"]):
+        headLabel = shuffledCloudClusterLabel[0, i]
+        tailLabel = shuffledCloudClusterLabel[set_axisarg["argymin"]-set_axisarg["argymax"], i]
+        if headLabel not in boundCloudLabel:
+            boundCloudLabel.append(headLabel)
+        if tailLabel not in boundCloudLabel:
+            boundCloudLabel.append(tailLabel)
+    for j in range(0, set_axisarg["argymax"]-set_axisarg["argymin"]):
+        headLabel = shuffledCloudClusterLabel[j, 0]
+        tailLabel = shuffledCloudClusterLabel[j, set_axisarg["argxmax"]-set_axisarg["argxmin"]]
+        if headLabel not in boundCloudLabel:
+            boundCloudLabel.append(headLabel)
+        if tailLabel not in boundCloudLabel:
+            boundCloudLabel.append(tailLabel)
+    return boundCloudLabel
 
 if __name__ == "__main__":
-    for i in range(tidx, tidx+length):
-        convection = Convection(tidx=i)
+    for ts in range(tidx, tidx+length):
+        convection = Convection(tidx=ts)
         convection.core3DMask = convection.get3Dcore()
         convection.corePlanView = convection.getCorePlanView()
         convection.CoreMaxPosition = convection.getCoreMax()
@@ -85,32 +100,35 @@ if __name__ == "__main__":
         #ybsubGrid = np.linspace(convection.yb[0], convection.yb[-1], numGrid)
         #xx, yy = np.meshgrid(xbsubGrid, ybsubGrid)
         #pcolormesh(xx, yy, np.full(shape=(yy.shape[0]-1, yy.shape[1]-1), fill_value=1), facecolor='none', edgecolor='black', cmap="binary_r", vmax=1, alpha=0.2)
-        cloudClusterLabel, Totalnum = measurements.label(convection.qcTopView)
+        cloudClusterLabel, Totalnum = measurements.label(convection.corePlanView)
         b = np.arange(cloudClusterLabel.max()+1)
         np.random.shuffle(b)
         shuffledCloudClusterLabel = b[cloudClusterLabel]
         labelCollector = np.unique(convection.CoreMaxPosition * shuffledCloudClusterLabel)
+        boundCloudLabel = killHalfCloud(shuffledCloudClusterLabel)
         filteredcloudCluster = np.zeros(shuffledCloudClusterLabel.shape)
-        print(labelCollector)
         for label in labelCollector:
-            filteredcloudCluster += label * np.array([shuffledCloudClusterLabel == label], dtype=int)[0]
+            if label not in boundCloudLabel:
+                filteredcloudCluster += label * np.array([shuffledCloudClusterLabel == label], dtype=int)[0]
 
         #qcTopView = np.array(convection.qcTopView > 0, dtype = int) # turn all into 1/0
         filteredcloudCluster = np.ma.masked_array(filteredcloudCluster, filteredcloudCluster <= 0)
+
+
 
         pcolormesh(xb, yb, convection.qcTopView, cmap='Greys')
         pcolormesh(xb, yb, filteredcloudCluster, cmap='jet')
         colorbar()
         xx, yy = np.meshgrid(xc, yc)
-        scatter(xx, yy, convection.CoreMaxPosition, 'purple')
-        title("Time: {:06d}".format(i*2))
-        savefig("test8.jpg", dpi=300)
-        #savefig("convectionTrack_{:06d}.jpg".format(i), dpi=300)
+        scatter(xx, yy, convection.CoreMaxPosition, 'purple', edgecolors='white')
+        title("Time: {:06d}".format(ts*2))
+        #savefig("test9.jpg", dpi=300)
+        savefig("convectionTrack2_{:06d}.jpg".format(ts), dpi=300)
         clf()
         # =====testing region=====
         
         # ========== drawing options ========== #
         output_string = "task {START} -> {NOW} -> {END} ({P} %)"\
-                        .format(START=tidx, NOW=i, END=tidx+length-1, P=((i - tidx + 1)/(length)*100))
+                        .format(START=tidx, NOW=ts, END=tidx+length-1, P=((ts - tidx + 1)/(length)*100))
         print(output_string)
 
