@@ -1,17 +1,16 @@
 import numpy as np
-import numpy as np
 from numpy import ma
 from matplotlib.pyplot import *
-import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import scipy.ndimage.filters as filters
+from scipy.ndimage import measurements
 import sys
 ##### import self-defined lib #####
 from nclcmaps import nclcmap
 #sys.path.append('../code/')
 from initiate import *
 
-class Convection():
+class Convection:
     def __init__(self, tidx):
         self.xc, self.yc, self.zc = xc, yc, zc
         self.zz = zz
@@ -58,13 +57,12 @@ class Convection():
                     CoreMaxPosition[ysubGridStart:ysubGridEnd+1, xsubGridStart:xsubGridEnd+1] += subGridMaxPosition
         return CoreMaxPosition
 
+    def getCloud(self):
+        qc = cut_edge(self.thmo["qc"], set_axisarg)
+        return qc
 
-        #coreMaxValue = filters.maximum_filter(self.corePlanView, neighbourhood_size)
-        #coreMax = (self.corePlanView == coreMaxValue)
-        #coreMinValue = filters.minimum_filter(self.corePlanView, neighbourhood_size)
-        #diff = ((coreMaxValue - coreMinValue) >= threshold)
-        #coreMax[diff == 0] = 0
-        #return coreMax
+
+
 
 if __name__ == "__main__":
     for i in range(tidx, tidx+length):
@@ -72,17 +70,43 @@ if __name__ == "__main__":
         convection.core3DMask = convection.get3Dcore()
         convection.corePlanView = convection.getCorePlanView()
         convection.CoreMaxPosition = convection.getCoreMax()
+        position = np.asarray((np.where(convection.CoreMaxPosition != 0))).T
+        coreXc, coreYc = xc[position[:, 1]], yc[position[:, 0]]
+        convection.qc = convection.getCloud()
+        convection.qcTopView = np.array(np.sum(convection.qc, axis=0) != 0, dtype=int)
+
         # =====testing region=====
-        pcolormesh(xb, yb, convection.corePlanView)
+        #pcolormesh(xb, yb, convection.corePlanView, cmap="coolwarm", vmin=0, vmax=20)
+        #colorbar(extend='max')
+        #xx, yy = np.meshgrid(xc, yc)
+        #scatter(xx, yy, convection.CoreMaxPosition, 'red')
+        #numGrid = 20
+        #xbsubGrid = np.linspace(convection.xb[0], convection.xb[-1], numGrid)
+        #ybsubGrid = np.linspace(convection.yb[0], convection.yb[-1], numGrid)
+        #xx, yy = np.meshgrid(xbsubGrid, ybsubGrid)
+        #pcolormesh(xx, yy, np.full(shape=(yy.shape[0]-1, yy.shape[1]-1), fill_value=1), facecolor='none', edgecolor='black', cmap="binary_r", vmax=1, alpha=0.2)
+        cloudClusterLabel, Totalnum = measurements.label(convection.qcTopView)
+        b = np.arange(cloudClusterLabel.max()+1)
+        np.random.shuffle(b)
+        shuffledCloudClusterLabel = b[cloudClusterLabel]
+        labelCollector = np.unique(convection.CoreMaxPosition * shuffledCloudClusterLabel)
+        filteredcloudCluster = np.zeros(shuffledCloudClusterLabel.shape)
+        print(labelCollector)
+        for label in labelCollector:
+            filteredcloudCluster += label * np.array([shuffledCloudClusterLabel == label], dtype=int)[0]
+
+        #qcTopView = np.array(convection.qcTopView > 0, dtype = int) # turn all into 1/0
+        filteredcloudCluster = np.ma.masked_array(filteredcloudCluster, filteredcloudCluster <= 0)
+
+        pcolormesh(xb, yb, convection.qcTopView, cmap='Greys')
+        pcolormesh(xb, yb, filteredcloudCluster, cmap='jet')
         colorbar()
         xx, yy = np.meshgrid(xc, yc)
-        scatter(xx, yy, convection.CoreMaxPosition, 'red')
-        numGrid = 20
-        xbsubGrid = np.linspace(convection.xb[0], convection.xb[-1], numGrid)
-        ybsubGrid = np.linspace(convection.yb[0], convection.yb[-1], numGrid)
-        xx, yy = np.meshgrid(xbsubGrid, ybsubGrid)
-        pcolormesh(xx, yy, np.full(shape=(yy.shape[0]-1, yy.shape[1]-1), fill_value=1), facecolor='none', edgecolor='black', cmap="binary_r", vmax=1, alpha=0.2)
-        savefig("test{}.jpg".format(i), dpi=300)
+        scatter(xx, yy, convection.CoreMaxPosition, 'purple')
+        title("Time: {:06d}".format(i*2))
+        savefig("test8.jpg", dpi=300)
+        #savefig("convectionTrack_{:06d}.jpg".format(i), dpi=300)
+        clf()
         # =====testing region=====
         
         # ========== drawing options ========== #
